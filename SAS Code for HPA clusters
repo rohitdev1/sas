@@ -1,0 +1,18 @@
+Connecting to SAS Hadoop cluster
+
+option set=SAS_HADOOP_JAR_PATH='/sas/software/compute/hadoop/lib';
+option set=SAS_HADOOP_CONFIG_PATH='/sas/software/compute/hadoop/conf';
+libname xxxx hadoop server='xxxx' database=xxx subprotocol=hive2
+hive_principal='hive/xxxx'
+config="/sas/software/compute/hadoop/conf/hadoop_merged.xml";
+
+Optimised query in Big Data environment
+
+proc sql noprint ;
+    connect to hadoop (hive_principal='username'
+       server=xxx subprotocol=hive2);
+    create table sample as
+       select * from connection to hadoop
+        (select t1.*
+ from xxxx t1 );
+quit;
