@@ -1,0 +1,16 @@
+data a;
+ input name$ age gender$ car_owned$;
+ datalines;
+ ROHIT 43 M KIA
+ MOHIT 45 M NISAN
+ ROHAN 50 M KIA|FORD
+ ;
+ RUN;
+
+data B ;
+set A; 
+do i=1 by 1 while(scan(car_owned,i,'|') ^=' '); 
+CAR=scan(CAR_OWNED,i,'|'); 
+output; 
+end; 
+run;
