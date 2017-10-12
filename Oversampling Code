@@ -1,0 +1,59 @@
+%macro oversampling(inputData=,targetVariable=,targetValue=,eventRate=,outputData=);
+
+	%let data = %scan(&inputData,2,.);
+	%if &data. = %then 
+		%let data = %scan(&inputData,1,.);
+
+	%put **** data= &data ***;
+
+	PROC FREQ DATA=&inputData. NOPRINT;
+	TABLES &targetVariable. / out=&data._mac;
+	RUN;
+
+	DATA _NULL_;
+	SET &data._mac;
+		IF &targetVariable. = &targetValue. THEN;
+		DO;
+		CALL SYMPUT ("EventCnt", COUNT);
+		END;
+	RUN;
+	DATA _NULL_;
+		CALL SYMPUT ( "SampleSize", ((1-&eventRate.)/&eventRate.  )*&EventCnt. );
+	RUN;
+
+	%PUT Event count is &EventCnt.;
+	%PUT Sample size for over-sampling is &SampleSize.;
+
+	* ---------- OVERSAMPLE:(select randomly from event=0,a sample size which will represent 90 of total);
+	PROC SURVEYSELECT DATA=&inputData.(WHERE=(&targetVariable. ^= &targetValue.)) OUT=&data._OS_0
+		METHOD=SRS
+	   SAMPSIZE=&SampleSize. NOPRINT;
+	RUN;
+
+	DATA &data._OS_1;
+	SET &inputData.(WHERE=(&targetVariable. = &targetValue.));
+	RUN;
+
+	* ---------- COMBINE TGT AND CTL SAMPLES AND CREATE A FICTIF EFFECTIVE DATE;
+	DATA &outputData.;
+	SET &data._OS_1 
+	    &data._OS_0;
+	RUN;
+
+	PROC FREQ DATA=&outputData.;
+	TABLES &targetVariable.;
+	RUN;
+
+	PROC DATASETS LIB=work NOLIST; 
+	  DELETE &data._mac &data._OS_1 &data._OS_0  ; 
+	QUIT; 
+	RUN;
+
+%mend oversampling;
+
+
+%oversampling( inputData=XXXX
+              ,targetVariable=XXXX
+			  ,targetValue=XXXX
+			  ,eventRate=XXXX
+              ,outputData=XXXX);
