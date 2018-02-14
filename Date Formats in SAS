@@ -1,0 +1,186 @@
+%let ROOT=/******PUT PATH HERE ****/;
+%let ROOT_1=/******PUT PATH HERE ****/;
+%let ROOT_2=//******PUT PATH HERE ****/;
+%let ROOT_3=//******PUT PATH HERE ****/;
+
+
+%let xmlcfg="/sas/thirdparty/hadoopp/final/merged.xml";
+options set=SAS_HADOOP_JAR_PATH="/sas/thirdparty/hadoopp/final";
+options set=SAS_HADOOP_CONFIG_PATH="/sas/thirdparty/hadoopp/final";
+libname ********
+HADOOP
+server = "********"
+schema=******
+subprotocol=hive2 transcode_fail=warning READ_METHOD=JDBC;
+
+
+%macro date(date, backward, forward);
+data date;
+	%global ddmmmyyyy yyyymmdd yyyy_mm_dd ref_dt;
+	ddmmmyyyy=&date;
+	yyyymmdd=&date;
+	yyyy_mm_dd=&date;
+
+	format ddmmmyyyy date9.;
+	format yyyymmdd yymmddn8.;
+	format yyyy_mm_dd yymmdd10.;
+	informat ddmmmyyyy date9.;
+	*informat yyyymmdd yymmddn8.;
+	informat yyyy_mm_dd yymmdd10.;
+
+	%do i=1 %to &backward;
+		%let j=%eval(&backward-&i+1);
+
+		%global beg_b&j end_b&j yyyy_b&j mm_b&j yyyymm_b&j mmyyyy_b&j yyyy_mm_b&j beg_dt_b&j end_dt_b&j;
+
+		beg_b&j=intnx('month', &date, -&j, 'begin');
+		end_b&j=intnx('month', &date, -&j, 'end');
+
+		year_b&j=year(end_b&j);
+		month_b&j=month(end_b&j);
+
+		yyyy_b&j=compress(year_b&j);
+
+		if month_b&j in(1,2,3,4,5,6,7,8,9) then mm_b&j=compress('0'||month_b&j);
+		else if month_b&j in(10,11,12) then mm_b&j=compress(month_b&j);
+
+		if month_b&j in(1,2,3,4,5,6,7,8,9) then yyyymm_b&j=compress(year_b&j||'0'||month_b&j);
+		else if month_b&j in(10,11,12) then yyyymm_b&j=compress(year_b&j||month_b&j);
+
+		if month_b&j in(1,2,3,4,5,6,7,8,9) then mmyyyy_b&j=compress('0'||month_b&j||year_b&j);
+		else if month_b&j in(10,11,12) then mmyyyy_b&j=compress(month_b&j||year_b&j);
+
+		if month_b&j in(1,2,3,4,5,6,7,8,9) then yyyy_mm_b&j=compress("'"||year_b&j||'-0'||month_b&j||"'");
+		else if month_b&j in(10,11,12) then yyyy_mm_b&j=compress("'"||year_b&j||'-'||month_b&j||"'");
+
+		format beg_b&j end_b&j date9.;
+		format yyyy_b&j $4.;
+		format mm_b&j $2.;
+		format yyyymm_b&j mmyyyy_b&j $6.;
+		format yyyy_mm_b&j $9.;
+		informat beg_b&j end_b&j date9.;
+		informat yyyy_b&j $4.;
+		informat mm_b&j $2.;
+		informat yyyymm_b&j mmyyyy_b&j $6.;
+		informat yyyy_mm_b&j $9.;
+	%end;
+
+		%global beg_0 end_0 yyyy_0 mm_0 yyyymm_0 mmyyyy_0 yyyy_mm_0 beg_dt_0 end_dt_0;
+
+		beg_0=intnx('month', &date, 0, 'begin');
+		end_0=intnx('month', &date, 0, 'end');
+
+		year_0=year(end_0);
+		month_0=month(end_0);
+
+		yyyy_0=compress(year_0);
+
+		if month_0 in(1,2,3,4,5,6,7,8,9) then mm_0=compress('0'||month_0);
+		else if month_0 in(10,11,12) then mm_0=compress(month_0);
+
+		if month_0 in(1,2,3,4,5,6,7,8,9) then yyyymm_0=compress(year_0||'0'||month_0);
+		else if month_0 in(10,11,12) then yyyymm_0=compress(year_0||month_0);
+
+		if month_0 in(1,2,3,4,5,6,7,8,9) then mmyyyy_0=compress('0'||month_0||year_0);
+		else if month_0 in(10,11,12) then mmyyyy_0=compress(month_0||year_0);
+
+		if month_0 in(1,2,3,4,5,6,7,8,9) then yyyy_mm_0=compress("'"||year_0||'-0'||month_0||"'");
+		else if month_0 in(10,11,12) then yyyy_mm_0=compress("'"||year_0||'-'||month_0||"'");
+
+		format beg_0 end_0 date9.;
+		format yyyy_0 $4.;
+		format mm_0 $2.;
+		format yyyymm_0 mmyyyy_0 $6.;
+		format yyyy_mm_0 $9.;
+		informat beg_0 end_0 date9.;
+		informat yyyy_0 $4.;
+		informat mm_0 $2.;
+		informat yyyymm_0 mmyyyy_0 $6.;
+		informat yyyy_mm_0 $9.;
+
+	%do i=1 %to &forward;
+
+		%global beg_f&i end_f&i yyyy_f&i mm_f&i yyyymm_f&i mmyyyy_f&i yyyy_mm_f&i beg_dt_f&i end_dt_f&i;
+
+		beg_f&i=intnx('month', &date, &i, 'begin');
+		end_f&i=intnx('month', &date, &i, 'end');
+
+		year_f&i=year(end_f&i);
+		month_f&i=month(end_f&i);
+
+		yyyy_f&i=compress(year_f&i);
+
+		if month_f&i in(1,2,3,4,5,6,7,8,9) then mm_f&i=compress('0'||month_f&i);
+		else if month_f&i in(10,11,12) then mm_f&i=compress(month_f&i);
+
+		if month_f&i in(1,2,3,4,5,6,7,8,9) then yyyymm_f&i=compress(year_f&i||'0'||month_f&i);
+		else if month_f&i in(10,11,12) then yyyymm_f&i=compress(year_f&i||month_f&i);
+
+		if month_f&i in(1,2,3,4,5,6,7,8,9) then mmyyyy_f&i=compress('0'||month_f&i||year_f&i);
+		else if month_f&i in(10,11,12) then mmyyyy_f&i=compress(month_f&i||year_f&i);
+
+		if month_f&i in(1,2,3,4,5,6,7,8,9) then yyyy_mm_f&i=compress("'"||year_f&i||'-0'||month_f&i||"'");
+		else if month_f&i in(10,11,12) then yyyy_mm_f&i=compress("'"||year_f&i||'-'||month_f&i||"'");
+
+		format beg_f&i end_f&i date9.;
+		format yyyy_f&i $4.;
+		format mm_f&i $2.;
+		format yyyymm_f&i mmyyyy_f&i $6.;
+		format yyyy_mm_f&i $9.;
+		informat beg_f&i end_f&i date9.;
+		informat yyyy_f&i $4.;
+		informat mm_f&i $2.;
+		informat yyyymm_f&i mmyyyy_f&i $6.;
+		informat yyyy_mm_f&i $9.;
+	%end;
+	run;
+
+proc sql noprint;
+		select ddmmmyyyy, yyyymmdd, yyyy_mm_dd into :ddmmmyyyy, :yyyymmdd, :yyyy_mm_dd from date;
+	%do i=1 %to &backward;
+		%let j=%eval(&backward-&i+1);
+		select beg_b&j, end_b&j, yyyy_b&j, mm_b&j, yyyymm_b&j, mmyyyy_b&j, yyyy_mm_b&j into
+				:beg_b&j, :end_b&j, :yyyy_b&j, :mm_b&j, :yyyymm_b&j, :mmyyyy_b&j, :yyyy_mm_b&j from date;
+	%end;
+		select beg_0, end_0, yyyy_0, mm_0, yyyymm_0, mmyyyy_0, yyyy_mm_0 into
+				:beg_0, :end_0, :yyyy_0, :mm_0, :yyyymm_0, :mmyyyy_0, :yyyy_mm_0 from date;
+	%do i=1 %to &forward;
+		select beg_f&i, end_f&i, yyyy_f&i, mm_f&i, yyyymm_f&i, mmyyyy_f&i, yyyy_mm_f&i into
+				:beg_f&i, :end_f&i, :yyyy_f&i, :mm_f&i, :yyyymm_f&i, :mmyyyy_f&i, :yyyy_mm_f&i from date;
+	%end;
+	quit;
+
+data date;
+	set date;
+	%do i=1 %to &backward;
+	%let j=%eval(&backward-&i+1);
+		beg_dt_b&j=compress("'"||"&&beg_b&j"||"'");
+		end_dt_b&j=compress("'"||"&&end_b&j"||"'");
+	%end;
+		beg_dt_0=compress("'"||"&beg_0"||"'");
+		end_dt_0=compress("'"||"&end_0"||"'");
+	%do i=1 %to &forward;
+		beg_dt_f&i=compress("'"||"&&beg_f&i"||"'");
+		end_dt_f&i=compress("'"||"&&end_f&i"||"'");
+	%end;
+	ref_dt=compress("'"||"&ddmmmyyyy"||"'");
+	run;
+
+proc sql noprint;
+	%do i=1 %to &backward;
+		%let j=%eval(&backward-&i+1);
+		select beg_dt_b&j, end_dt_b&j into :beg_dt_b&j, :end_dt_b&j from date;
+	%end;
+		select beg_dt_0, end_dt_0 into :beg_dt_0, :end_dt_0 from date;
+	%do i=1 %to &forward;
+		select beg_dt_f&i, end_dt_f&i into :beg_dt_f&i, :end_dt_f&i from date;
+	%end;
+	select ref_dt into :ref_dt from date;
+quit;
+
+%global y_day;
+%let today_=&sysdate9.;
+%let y_day=%sysfunc(intnx(day,"&today_"d,-1),date9.);
+%put &y_day;
+
+%mend date;
